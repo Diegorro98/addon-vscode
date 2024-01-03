@@ -1,0 +1,46 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Home Assistant Community Add-on: Studio Code Server
+# Sets up code-server.
+# ==============================================================================
+declare config_path
+
+# List of previous config hashes, to allow upgrade "default" configs.
+readonly -a PREVIOUS_DEFAULT_CONFIG_HASHES=(
+    4af003224345302a7f04cf40703554da5a1d8baba512dcb16cf50147f33cf06199f9ef1ddde5a2ecbc5e923ca02d1316ae62588aa9fc439a6cd994576a2b019d
+)
+
+if bashio::config.has_value 'config_path'; then
+    config_path=$(bashio::config 'config_path')
+    if ! bashio::fs.directory_exists "${config_path}"; then
+        bashio::exit.nok "Configured config path does not exists"
+    fi
+fi
+
+# Ensure persistent data folder exists.
+if ! bashio::fs.directory_exists '/data/vscode'; then
+    mkdir -p /data/vscode/extensions \
+        || bashio::exit.nok "Could not create persistent storage folder."
+fi
+
+# Copy in the extensions we deliver.
+cp -R /root/.vscode-server/extensions/* /data/vscode/extensions
+
+# Ensure user extensions folder exists
+mkdir -p /data/vscode/extensions
+
+# Sets up default user settings on first start.
+if ! bashio::fs.file_exists '/data/vscode/data/Machine/settings.json'; then
+    mkdir -p /data/vscode/data/Machine \
+        || bashio::exit.nok "Could not create persistent storage folder."
+
+    cp /root/default-data/Machine/settings.json /data/vscode/data/Machine/settings.json
+fi
+
+# Upgrade settings.json is still default from previous version.
+current=$(sha512sum /data/vscode/data/Machine/settings.json|cut -d " " -f 1)
+bashio::log.info "Current hash: ${current}"
+if [[ " ${PREVIOUS_DEFAULT_CONFIG_HASHES[*]} " == *" ${current} "* ]]; then
+    cp /root/default-data/Machine/settings.json /data/vscode/data/Machine/settings.json
+fi

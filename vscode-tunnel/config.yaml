@@ -1,0 +1,43 @@
+---
+name: VS Code Tunnel
+version: dev
+slug: vscode-tunnel
+description: Fully featured Visual Studio Code (VSCode) experience integrated in the Home Assistant frontend.
+url: https://github.com/hassio-addons/addon-vscode
+codenotary: codenotary@frenck.dev
+ingress: false
+ingress_stream: false
+startup: services
+init: false
+arch:
+  - aarch64
+  - amd64
+uart: true
+hassio_api: true
+hassio_role: manager
+homeassistant_api: true
+map:
+  - addons:rw
+  - all_addon_configs:rw
+  - backup:rw
+  - homeassistant_config:rw
+  - media:rw
+  - share:rw
+  - ssl:rw
+services:
+  - mysql:want
+  - mqtt:want
+options:
+  server_name: homeassistant
+  login_provider: github
+  packages: []
+  init_commands: []
+schema:
+  server_name: str
+  login_provider: list(github|microsoft)
+  log_level: list(trace|debug|info|notice|warning|error|fatal)?
+  config_path: str?
+  packages:
+    - str
+  init_commands:
+    - str

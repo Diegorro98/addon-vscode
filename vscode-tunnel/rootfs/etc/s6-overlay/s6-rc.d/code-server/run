@@ -1,0 +1,58 @@
+#!/command/with-contenv bashio
+# shellcheck shell=bash
+# ==============================================================================
+# Home Assistant Community Add-on: Studio Code Server
+# Runs the code-server
+# ==============================================================================
+
+readonly PROVIDER_CONFIG="/data/provider"
+
+export VSCODE_CLI_DATA_DIR="/data/vscode/cli"
+
+declare -a options
+declare config_path
+declare server_name
+declare login_provider
+declare log_level
+
+bashio::log.info 'Starting VS Code tunnel...'
+config_path="/config"
+if bashio::config.has_value 'config_path'; then
+    config_path=$(bashio::config 'config_path')
+fi
+server_name=$(bashio::config 'server_name')
+login_provider=$(bashio::config 'login_provider')
+
+# Check if we need to generate a provider config file, if exists, check if it's the same as the one in the config
+if ! bashio::fs.file_exists "${PROVIDER_CONFIG}"; then
+	echo "${login_provider}" > "${PROVIDER_CONFIG}"
+	bashio::log.info "Created provider config file"
+	code tunnel user login --provider "${login_provider}"
+else
+	#Read the content of the file and compare
+	PROVIDER_CONFIG_CONTENT=$(cat "${PROVIDER_CONFIG}")
+	if [[ "${PROVIDER_CONFIG_CONTENT}" != "${login_provider}" ]]; then
+
+		#Update config
+		echo "${login_provider}" > "${PROVIDER_CONFIG}"
+		bashio::log.info "Updated provider config file"
+        code tunnel user login --provider "${login_provider}"
+	fi
+fi
+
+options+=(--disable-telemetry)
+options+=(--name "${server_name}")
+if bashio::config.has_value 'config_path'; then
+    log_level=$(bashio::config 'config_path')
+    options+=(--log "${log_level}")
+fi
+options+=(--accept-server-license-terms)
+
+# Export env variables for the Home Assistant extension
+export HASS_SERVER="http://supervisor/core"
+export HASS_TOKEN="${SUPERVISOR_TOKEN:-}"
+export VSCODE_AGENT_FOLDER="/data/vscode"
+
+# Run the code server
+cd "${config_path}" || bashio::exit.nok "Could not change working directory"
+exec code tunnel "${options[@]}"

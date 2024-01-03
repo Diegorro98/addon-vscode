@@ -1,0 +1,4 @@
+# https://developers.home-assistant.io/docs/add-ons/repository#repository-configuration
+name: VS Code add-on repository
+url: 'https://github.com/Diegorro98/addon-vscode'
+maintainer: Diegorro98 <jdrr1998@hotmail.com>
