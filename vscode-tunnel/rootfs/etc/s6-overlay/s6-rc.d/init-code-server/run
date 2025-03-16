@@ -24,8 +24,10 @@ if ! bashio::fs.directory_exists '/data/vscode'; then
         || bashio::exit.nok "Could not create persistent storage folder."
 fi
 
-# Copy in the extensions we deliver.
-cp -R /root/.vscode-server/extensions/* /data/vscode/extensions
+# Copy in the extensions we deliver on first start
+if [ -z "$(ls -A /data/vscode/extensions)" ]; then
+    cp -R /root/.vscode-server/extensions/* /data/vscode/extensions
+fi
 
 # Ensure user extensions folder exists
 mkdir -p /data/vscode/extensions
