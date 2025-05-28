@@ -20,6 +20,7 @@ COPY vscode.extensions /root/vscode.extensions
 
 # Setup base system
 ARG BUILD_ARCH=amd64
+ARG CODE_VERSION="1.100.2"
 ARG HA_CLI_VERSION="4.38.0"
 # hadolint ignore=SC2181, DL3008
 RUN \
@@ -59,13 +60,13 @@ RUN \
     && if [[ "${BUILD_ARCH}" = "armhf" ]]; then ARCH="armhf"; fi \
     && if [[ "${BUILD_ARCH}" = "armhf" ]]; then VERSION="linux";  else VERSION="alpine"; fi \
     && curl -J -L -o /tmp/code.tar.gz \
-        "https://code.visualstudio.com/sha/download?build=stable&os=cli-${VERSION}-${ARCH}" \
+        "https://update.code.visualstudio.com/${CODE_VERSION}/cli-${VERSION}-${ARCH}/stable" \
     && mkdir -p /usr/local/bin \
     && tar zxvf \
         /tmp/code.tar.gz \
         -C /usr/local/bin \
     \
-    && curl -sSL "https://update.code.visualstudio.com/latest/server-linux-${ARCH}/stable" -o vscode-server.tar.gz \
+    && curl -sSL "https://update.code.visualstudio.com/${CODE_VERSION}/server-linux-${ARCH}/stable" -o vscode-server.tar.gz \
     && mkdir -p /root/.vscode-server/bin/latest \
     && tar zxvf vscode-server.tar.gz \
         --strip 1 -C /root/.vscode-server/bin/latest > /dev/null \
