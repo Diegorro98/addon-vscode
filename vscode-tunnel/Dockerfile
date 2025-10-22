@@ -20,34 +20,34 @@ COPY vscode.extensions /root/vscode.extensions
 
 # Setup base system
 ARG BUILD_ARCH=amd64
-ARG CODE_VERSION="1.103.2"
-ARG HA_CLI_VERSION="4.40.1"
+ARG CODE_VERSION="1.105.1"
+ARG HA_CLI_VERSION="4.41.0"
 # hadolint ignore=SC2181, DL3008
 RUN \
     apt-get update \
     \
     && apt-get install -y --no-install-recommends \
         ack=3.6.0-1 \
-        libarchive-tools=3.6.2-1+deb12u2 \
+        libarchive-tools \
         build-essential=12.9 \
         colordiff=1.0.20-1 \
         git=1:2.39.5-0+deb12u2 \
         iputils-ping=3:20221126-1+deb12u1 \
-        locales=2.36-9+deb12u7 \
+        locales=2.36-9+deb12u13 \
         mariadb-client=1:10.11.14-0+deb12u2 \
-        mosquitto-clients=2.0.11-1.2+deb12u1 \
+        mosquitto-clients=2.0.11-1.2+deb12u2 \
         net-tools=2.10-0.1+deb12u2 \
         nmap=7.93+dfsg1-1 \
-        openssh-client=1:9.2p1-2+deb12u6 \
+        openssh-client=1:9.2p1-2+deb12u7 \
         openssl=3.0.17-1~deb12u3 \
         python3-dev=3.11.2-1+b1 \
         python3-venv=3.11.2-1+b1 \
         python3=3.11.2-1+b1 \
         unzip=6.0-28 \
         uuid-runtime=2.38.1-5+deb12u1 \
-        wget>=1.21.3-1+b2 \
+        wget=1.21.3-1+deb12u1 \
         zip=3.0-13 \
-        zsh=5.9-4+b6 \
+        zsh=5.9-4+b7 \
         less=590-2.1~deb12u2 \
     \
     && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
