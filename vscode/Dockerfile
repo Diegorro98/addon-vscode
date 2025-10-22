@@ -20,8 +20,8 @@ COPY vscode.extensions /root/vscode.extensions
 
 # Setup base system
 ARG BUILD_ARCH=amd64
-ARG CODE_SERVER_VERSION="v4.100.2"
-ARG HA_CLI_VERSION="4.38.0"
+ARG CODE_SERVER_VERSION="v4.103.2"
+ARG HA_CLI_VERSION="4.40.1"
 # hadolint ignore=SC2181, DL3008
 RUN \
     apt-get update \
@@ -34,12 +34,12 @@ RUN \
         git=1:2.39.5-0+deb12u2 \
         iputils-ping=3:20221126-1+deb12u1 \
         locales=2.36-9+deb12u7 \
-        mariadb-client=1:10.11.11-0+deb12u1 \
+        mariadb-client=1:10.11.14-0+deb12u2 \
         mosquitto-clients=2.0.11-1.2+deb12u1 \
-        net-tools=2.10-0.1+deb12u1 \
+        net-tools=2.10-0.1+deb12u2 \
         nmap=7.93+dfsg1-1 \
-        openssh-client=1:9.2p1-2+deb12u6 \
-        openssl=3.0.16-1~deb12u1 \
+        openssh-client=1:9.2p1-2+deb12u7 \
+        openssl=3.0.17-1~deb12u3 \
         python3-dev=3.11.2-1+b1 \
         python3-venv=3.11.2-1+b1 \
         python3=3.11.2-1+b1 \
