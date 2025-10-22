@@ -4,6 +4,7 @@ version: dev
 slug: vscode-tunnel
 description: Fully featured Visual Studio Code (VSCode) experience integrated in the Home Assistant frontend.
 url: https://github.com/hassio-addons/addon-vscode
+image: diegorro98/hass-vscode-tunnel-{arch}
 ingress: false
 ingress_stream: false
 startup: services
