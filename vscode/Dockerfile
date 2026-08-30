@@ -20,7 +20,7 @@ COPY vscode.extensions /root/vscode.extensions
 
 # Setup base system
 ARG BUILD_ARCH=amd64
-ARG CODE_SERVER_VERSION="v4.105.1"
+ARG CODE_VERSION="1.105.1"
 ARG HA_CLI_VERSION="4.42.0"
 # hadolint ignore=SC2181, DL3008
 RUN \
@@ -56,38 +56,36 @@ RUN \
     && curl https://bootstrap.pypa.io/get-pip.py | python3 \
     \
     && if [[ "${BUILD_ARCH}" = "aarch64" ]]; then ARCH="arm64"; fi \
-    && if [[ "${BUILD_ARCH}" = "amd64" ]]; then ARCH="amd64"; fi \
+    && if [[ "${BUILD_ARCH}" = "amd64" ]]; then ARCH="x64"; fi \
+    && if [[ "${BUILD_ARCH}" = "armhf" ]]; then ARCH="armhf"; fi \
+    && if [[ "${BUILD_ARCH}" = "armhf" ]]; then VERSION="linux";  else VERSION="alpine"; fi \
     && curl -J -L -o /tmp/code.tar.gz \
-        "https://github.com/coder/code-server/releases/download/${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION#v}-linux-${ARCH}.tar.gz" \
-    && mkdir -p /usr/local/lib/code-server \
+        "https://update.code.visualstudio.com/${CODE_VERSION}/cli-${VERSION}-${ARCH}/stable" \
+    && mkdir -p /usr/local/bin \
     && tar zxvf \
         /tmp/code.tar.gz \
-        --strip 1 -C /usr/local/lib/code-server \
+        -C /usr/local/bin \
     \
-    && ln -s /usr/local/lib/code-server/bin/code-server /usr/local/bin/code-server \
-    \
-    && mkdir -p /root/.code-server/extensions \
+    && curl -sSL "https://update.code.visualstudio.com/${CODE_VERSION}/server-linux-${ARCH}/stable" -o vscode-server.tar.gz \
+    && mkdir -p /root/.vscode-server/bin/latest \
+    && tar zxvf vscode-server.tar.gz \
+        --strip 1 -C /root/.vscode-server/bin/latest > /dev/null \
+    && touch /root/.vscode-server/bin/latest/0 \
     && uuid=$(uuidgen) \
     && while read -r ext; do \
         extention="${ext%%#*}" \
         vendor="${extention%%.*}"; \
         slug="${extention#*.}"; \
-        version="${ext##*#}"; \
+        version="${ext#*@}"; \
         \
         echo "Installing vscode extension: ${slug} by ${vendor} @ ${version} "; \
         \
-        echo "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${vendor}/vsextensions/${slug}/${version}/vspackage"; \
-        curl -JL --retry 5 -o "/tmp/${extention}-${version}.vsix" \
-            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.130 Safari/537.36" \
-            -H "x-market-user-id: ${uuid}" \
-            "https://marketplace.visualstudio.com/_apis/public/gallery/publishers/${vendor}/vsextensions/${slug}/${version}/vspackage"; \
-        mkdir -p "/usr/local/lib/code-server/lib/vscode/extensions/${extention}-${version}"; \
-        bsdtar --strip-components=1 -xf "/tmp/${extention}-${version}.vsix" \
-                    -C "/usr/local/lib/code-server/lib/vscode/extensions/${extention}-${version}" extension; \
+        /root/.vscode-server/bin/latest/bin/code-server --install-extension "${ext}"; \
         [ $? -ne 0 ] && exit 1; \
         sleep 1; \
     done < /root/vscode.extensions \
-    && ls -la /usr/local/lib/code-server/lib/vscode/extensions/ \
+    && rm -fr /root/vscode.extensions /root/.vscode-server/bin \
+    && ls -la /root/.vscode-server/extensions \
     \
     && curl -L -s -o /usr/bin/ha \
         "https://github.com/home-assistant/cli/releases/download/${HA_CLI_VERSION}/ha_${BUILD_ARCH}" \
@@ -130,10 +128,6 @@ RUN \
 # Copy root filesystem
 COPY rootfs /
 
-# Health check
-HEALTHCHECK \
-    CMD curl --fail http://127.0.0.1:1337/healthz || exit 1
-
 # Build arguments
 ARG BUILD_ARCH
 ARG BUILD_DATE
@@ -150,11 +144,11 @@ LABEL \
     io.hass.arch="${BUILD_ARCH}" \
     io.hass.type="addon" \
     io.hass.version=${BUILD_VERSION} \
-    maintainer="Franck Nijhof <frenck@addons.community>" \
+    maintainer="Franck Nijhof <frenck@addons.community>, J. Diego Rodríguez Royo <jdrr1998@hotmail.com>" \
     org.opencontainers.image.title="${BUILD_NAME}" \
     org.opencontainers.image.description="${BUILD_DESCRIPTION}" \
     org.opencontainers.image.vendor="Home Assistant Community Add-ons" \
-    org.opencontainers.image.authors="Franck Nijhof <frenck@addons.community>" \
+    org.opencontainers.image.authors="Franck Nijhof <frenck@addons.community>, J. Diego Rodríguez Royo <jdrr1998@hotmail.com>" \
     org.opencontainers.image.licenses="MIT" \
     org.opencontainers.image.url="https://addons.community" \
     org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}" \

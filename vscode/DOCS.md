@@ -1,9 +1,7 @@
-# Home Assistant Community Add-on: Studio Code Server
+# Home Assistant Community Add-on: VS Code Tunnel
 
-This add-on runs [code-server](https://github.com/coder/code-server), which
-gives you a Visual Studio Code experience straight from the browser. It allows
-you to edit your Home Assistant configuration directly from your web browser,
-directly from within the Home Assistant frontend.
+This add-on runs [VS code CLI tunnel](https://code.visualstudio.com/docs/remote/tunnels),
+which allows you to connect to your Home Assistant instance using the VS Code Remote tunnels feature.
 
 The add-on has the Home Assistant, MDI icons and YAML extensions pre-installed
 and pre-configured right out of the box. This means that auto-completion works
@@ -20,10 +18,10 @@ comparison to installing any other Home Assistant add-on.
    [![Open this add-on in your Home Assistant instance.][addon-badge]][addon]
 
 1. Click the "Install" button to install the add-on.
-1. Start the "Studio Code Server" add-on.
-1. Check the logs of the "Studio Code Server" add-on to see if everything went
+1. Start the "VS Code Tunnel" add-on.
+1. Check the logs of the "VS Code Tunnel" add-on to see if everything went
    well.
-1. Click the "OPEN WEB UI" button to open Studio Code Server.
+1. Click the "OPEN WEB UI" button to open VS Code Tunnel.
 
 ## Configuration
 
@@ -32,6 +30,8 @@ comparison to installing any other Home Assistant add-on.
 Example add-on configuration:
 
 ```yaml
+server_name: homeassistant
+login_provider: github
 log_level: info
 config_path: /share/my_path
 packages:
@@ -41,6 +41,26 @@ init_commands:
 ```
 
 **Note**: _This is just an example, don't copy and paste it! Create your own!_
+
+### Option: `server_name`
+
+The `server_name` option allows you to specify the name of the server that
+will be used to connect to the VS Code Remote tunnel. This name is used to
+generate the URL that is used to connect to the tunnel.
+
+For example, if you set `server_name` to `homeassistant`, the URL to connect
+to the tunnel will be https://vscode.dev/tunnel/homeassistant.
+
+### Option: `login_provider`
+
+The `login_provider` option allows you to specify to which login provider 
+will be the tunnel associated to. This can be changed at any time, but it 
+will require to re-authenticate to the tunnel. Possible values are:
+
+- `github`
+- `microsoft`
+
+Remember to login in VS Code using the same login provider.
 
 ### Option: `log_level`
 
@@ -104,11 +124,6 @@ return to the defaults as delivered by this add-on, do the following:
   Although we support ARM devices, please be aware, that this add-on is quite
   heavy to run, and requires quite a bit of RAM. We do not recommended to run
   it on devices with less than 4Gb of memory.
-- **Do not use the root directory (`/`) as your workspace.** Opening the root
-  directory causes severe performance issues, as VS Code will attempt to index
-  the entire filesystem, resulting in excessive CPU and memory usage. Always
-  use `/config` (the default) or another specific directory. The add-on will
-  prevent startup if the root directory is configured as the workspace.
 - "Visual Studio Code is unable to watch for file changes in this large
   workspace" (error ENOSPC)
 
