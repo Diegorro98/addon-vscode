@@ -1,8 +1,8 @@
-ARG BUILD_FROM=ghcr.io/hassio-addons/debian-base:9.0.0
+ARG BUILD_FROM=ghcr.io/hassio-addons/debian-base:9.4.0
 # hadolint ignore=DL3006
 FROM ${BUILD_FROM}
 
-# Confiure locale
+# Configure locale
 ENV \
     LANG=en_US.UTF-8 \
     LANGUAGE=en_US:en \
@@ -20,46 +20,45 @@ COPY vscode.extensions /root/vscode.extensions
 
 # Setup base system
 ARG BUILD_ARCH=amd64
-ARG CODE_VERSION="1.105.1"
-ARG HA_CLI_VERSION="4.42.0"
-# hadolint ignore=SC2181, DL3008
+ARG CODE_VERSION="1.135.0"
+ARG HA_CLI_VERSION="5.4.0"
 RUN \
     apt-get update \
     \
     && apt-get install -y --no-install-recommends \
         ack=3.8.1-1 \
-        libarchive-tools=3.7.4-4 \
+        libarchive-tools=3.7.4-4+deb13u1 \
         build-essential=12.12 \
         colordiff=1.0.21-1 \
         git=1:2.47.3-0+deb13u1 \
         iputils-ping=3:20240905-3 \
-        locales=2.41-12 \
-        mariadb-client=1:11.8.3-0+deb13u1 \
+        locales=2.41-12+deb13u3 \
+        mariadb-client=1:11.8.6-0+deb13u1 \
         mosquitto-clients=2.0.21-1 \
         net-tools=2.10-1.3 \
         nmap=7.95+dfsg-3 \
-        openssh-client=1:10.0p1-7 \
-        openssl=3.5.4-1~deb13u1 \
+        openssh-client=1:10.0p1-7+deb13u4 \
+        openssl=3.5.7-1~deb13u2 \
         python3-dev=3.13.5-1 \
         python3-venv=3.13.5-1 \
         python3=3.13.5-1 \
-        unzip=6.0-29 \
-        uuid-runtime=2.41-5 \
+        unzip=6.0-29+deb13u1 \
+        uuid-runtime=2.41.5-0+deb13u1 \
         wget=1.25.0-2 \
-        zip=3.0-15 \
-        zsh=5.9-8+b14 \
+        zip=3.0-15+deb13u1 \
+        zsh=5.9-8+b23 \
         less=668-1 \
     \
     && sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen \
     && locale-gen \
     \
-    && curl https://bootstrap.pypa.io/get-pip.py | python3 \
+    && curl -fsSL https://bootstrap.pypa.io/get-pip.py | python3 \
     \
     && if [[ "${BUILD_ARCH}" = "aarch64" ]]; then ARCH="arm64"; fi \
     && if [[ "${BUILD_ARCH}" = "amd64" ]]; then ARCH="x64"; fi \
     && if [[ "${BUILD_ARCH}" = "armhf" ]]; then ARCH="armhf"; fi \
     && if [[ "${BUILD_ARCH}" = "armhf" ]]; then VERSION="linux";  else VERSION="alpine"; fi \
-    && curl -J -L -o /tmp/code.tar.gz \
+    && curl -f -J -L -o /tmp/code.tar.gz \
         "https://update.code.visualstudio.com/${CODE_VERSION}/cli-${VERSION}-${ARCH}/stable" \
     && mkdir -p /usr/local/bin \
     && tar zxvf \
@@ -73,9 +72,9 @@ RUN \
     && touch /root/.vscode-server/bin/latest/0 \
     && uuid=$(uuidgen) \
     && while read -r ext; do \
-        extention="${ext%%#*}" \
-        vendor="${extention%%.*}"; \
-        slug="${extention#*.}"; \
+        extension="${ext%%#*}"; \
+        vendor="${extension%%.*}"; \
+        slug="${extension#*.}"; \
         version="${ext#*@}"; \
         \
         echo "Installing vscode extension: ${slug} by ${vendor} @ ${version} "; \
@@ -87,7 +86,7 @@ RUN \
     && rm -fr /root/vscode.extensions /root/.vscode-server/bin \
     && ls -la /root/.vscode-server/extensions \
     \
-    && curl -L -s -o /usr/bin/ha \
+    && curl -fsSL -o /usr/bin/ha \
         "https://github.com/home-assistant/cli/releases/download/${HA_CLI_VERSION}/ha_${BUILD_ARCH}" \
     && chmod a+x /usr/bin/ha \
     \
@@ -115,8 +114,10 @@ RUN \
         uuid-runtime \
     \
     && find /usr/local \
-        \( -type d -a -name test -o -name tests -o -name '__pycache__' \) \
-        -o \( -type f -a -name '*.pyc' -o -name '*.pyo' \) \
+        \( \
+            \( -type d -a \( -name test -o -name tests -o -name '__pycache__' \) \) \
+            -o \( -type f -a \( -name '*.pyc' -o -name '*.pyo' \) \) \
+        \) \
         -exec rm -rf '{}' + \
     \
     && rm -fr \
@@ -144,13 +145,13 @@ LABEL \
     io.hass.arch="${BUILD_ARCH}" \
     io.hass.type="addon" \
     io.hass.version=${BUILD_VERSION} \
-    maintainer="Franck Nijhof <frenck@addons.community>, J. Diego Rodríguez Royo <jdrr1998@hotmail.com>" \
+    maintainer="Franck Nijhof <opensource@frenck.dev>, J. Diego Rodríguez Royo <jdrr1998@hotmail.com>" \
     org.opencontainers.image.title="${BUILD_NAME}" \
     org.opencontainers.image.description="${BUILD_DESCRIPTION}" \
-    org.opencontainers.image.vendor="Home Assistant Community Add-ons" \
-    org.opencontainers.image.authors="Franck Nijhof <frenck@addons.community>, J. Diego Rodríguez Royo <jdrr1998@hotmail.com>" \
+    org.opencontainers.image.vendor="Home Assistant Community Apps" \
+    org.opencontainers.image.authors="Franck Nijhof <opensource@frenck.dev>, J. Diego Rodríguez Royo <jdrr1998@hotmail.com>" \
     org.opencontainers.image.licenses="MIT" \
-    org.opencontainers.image.url="https://addons.community" \
+    org.opencontainers.image.url="https://frenck.dev/home-assistant-apps" \
     org.opencontainers.image.source="https://github.com/${BUILD_REPOSITORY}" \
     org.opencontainers.image.documentation="https://github.com/${BUILD_REPOSITORY}/blob/main/README.md" \
     org.opencontainers.image.created=${BUILD_DATE} \

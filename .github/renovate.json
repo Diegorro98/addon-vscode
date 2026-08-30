@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["helpers:pinGitHubActionDigests"],
   "rebaseWhen": "behind-base-branch",
   "dependencyDashboard": true,
   "labels": ["dependencies", "no-stale"],
@@ -24,8 +25,8 @@
         "\\s\\s(?<package>[a-z0-9][a-z0-9-]+)=(?<currentValue>[a-z0-9-:_+~.]+)\\s+"
       ],
       "versioningTemplate": "deb",
-      "datasourceTemplate": "repology",
-      "depNameTemplate": "debian_13/{{{replace 'openssh-client' 'openssh' package}}}"
+      "datasourceTemplate": "deb",
+      "depNameTemplate": "{{{package}}}"
     },
     {
       "customType": "regex",
@@ -93,9 +94,9 @@
     {
       "customType": "regex",
       "managerFilePatterns": ["/vscode/vscode.extensions$/"],
-      "matchStrings": ["netcorext\\.uuid-generator#(?<currentValue>.+)\\s"],
+      "matchStrings": ["redhat\\.vscode-yaml#(?<currentValue>.+)\\s"],
       "datasourceTemplate": "github-releases",
-      "depNameTemplate": "arenchen/vscode-uuid-generator"
+      "depNameTemplate": "redhat-developer/vscode-yaml"
     },
     {
       "customType": "regex",
@@ -108,15 +109,20 @@
   ],
   "packageRules": [
     {
-      "matchDatasources": ["repology"],
+      "matchDatasources": ["deb"],
+      "registryUrls": [
+        "https://deb.debian.org/debian?suite=trixie&components=main&binaryArch=amd64",
+        "https://deb.debian.org/debian?suite=trixie-updates&components=main&binaryArch=amd64",
+        "https://deb.debian.org/debian-security?suite=trixie-security&components=main&binaryArch=amd64"
+      ],
       "automerge": true
     },
     {
-      "groupName": "Add-on base image",
+      "groupName": "App base image",
       "matchDatasources": ["docker"]
     },
     {
-      "groupName": "Add-on base image",
+      "groupName": "App base image",
       "matchDatasources": ["docker"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
@@ -143,6 +149,16 @@
     },
     {
       "matchManagers": ["pip_requirements"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "addLabels": ["github_actions"],
+      "rangeStrategy": "pin"
+    },
+    {
+      "matchManagers": ["github-actions"],
       "matchUpdateTypes": ["minor", "patch"],
       "automerge": true
     }

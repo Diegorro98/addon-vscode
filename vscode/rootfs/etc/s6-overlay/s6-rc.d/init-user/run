@@ -1,10 +1,11 @@
 #!/command/with-contenv bashio
 # shellcheck shell=bash
 # ==============================================================================
-# Home Assistant Community Add-on: Studio Code Server
+# Home Assistant Community App: Studio Code Server
 # Persists user settings and installs custom user packages.
 # ==============================================================================
 readonly -a DIRECTORIES=(addon_configs addons backup homeassistant media share ssl)
+readonly CLAUDE_USER_PATH=/data/claude
 readonly GIT_USER_PATH=/data/git
 readonly SSH_USER_PATH=/data/.ssh
 readonly ZSH_HISTORY_FILE=/root/.zsh_history
@@ -22,7 +23,7 @@ ln -sn "/config" "${HOME}/config" \
 ln -sn "/config" "/homeassistant" \
     || bashio::log.warning "Failed linking common directory: /homeassistant"
 
-# Store SSH settings in add-on data folder
+# Store SSH settings in app data folder
 if ! bashio::fs.directory_exists "${SSH_USER_PATH}"; then
     mkdir -p "${SSH_USER_PATH}" \
         || bashio::exit.nok 'Failed to create a persistent .ssh folder'
@@ -31,7 +32,16 @@ if ! bashio::fs.directory_exists "${SSH_USER_PATH}"; then
         || bashio::exit.nok \
             'Failed setting permissions on persistent .ssh folder'
 fi
-ln -sn "${SSH_USER_PATH}" ~/.ssh || bashio::log.warning "Failed linking .ssh"
+
+# The image ships an empty ~/.ssh; without removing it, the link below
+# would end up inside it as ~/.ssh/.ssh instead of replacing it.
+if [[ -d ~/.ssh ]] && [[ ! -L ~/.ssh ]]; then
+    # Clean up the nested link left behind by earlier versions
+    rm -f ~/.ssh/.ssh
+    rmdir ~/.ssh \
+        || bashio::log.warning "Not replacing non-empty ${HOME}/.ssh"
+fi
+ln -sfn "${SSH_USER_PATH}" ~/.ssh || bashio::log.warning "Failed linking .ssh"
 
 # Sets up ZSH shell
 touch "${ZSH_HISTORY_PERSISTANT_FILE}" \
@@ -44,7 +54,7 @@ chmod 600 "$ZSH_HISTORY_PERSISTANT_FILE" \
 ln -s -f "$ZSH_HISTORY_PERSISTANT_FILE" "$ZSH_HISTORY_FILE" \
     || bashio::exit.nok 'Failed linking the persistant ZSH history file'
 
-# Store user GIT settings in add-on data folder
+# Store user GIT settings in app data folder
 if ! bashio::fs.directory_exists "${GIT_USER_PATH}"; then
     mkdir -p "${GIT_USER_PATH}" \
         || bashio::exit.nok 'Failed to create a persistent git folder'
@@ -60,10 +70,35 @@ if ! bashio::fs.file_exists "${GIT_USER_PATH}/.gitconfig"; then
 fi
 ln -s "${GIT_USER_PATH}/.gitconfig" ~/.gitconfig || bashio::log.warning "Failed linking .gitconfig"
 
+# Store Claude Code settings & credentials in app data folder. The service
+# points Claude Code here through CLAUDE_CONFIG_DIR, which covers both of the
+# locations it would otherwise use: ~/.claude and ~/.claude.json.
+if ! bashio::fs.directory_exists "${CLAUDE_USER_PATH}"; then
+    mkdir -p "${CLAUDE_USER_PATH}" \
+        || bashio::exit.nok 'Failed to create a persistent Claude Code folder'
+
+    chmod 700 "${CLAUDE_USER_PATH}" \
+        || bashio::exit.nok \
+            'Failed setting permissions on persistent Claude Code folder'
+fi
+
+# Migrate the non-persistent locations left behind by an older app version.
+# Existing files are never overwritten, and the originals are left alone;
+# they are simply no longer read once CLAUDE_CONFIG_DIR is set.
+if bashio::fs.directory_exists ~/.claude; then
+    cp -a -n ~/.claude/. "${CLAUDE_USER_PATH}/" \
+        || bashio::log.warning 'Failed migrating the Claude Code folder'
+fi
+
+if bashio::fs.file_exists ~/.claude.json; then
+    cp -a -n ~/.claude.json "${CLAUDE_USER_PATH}/.claude.json" \
+        || bashio::log.warning 'Failed migrating the Claude Code configuration'
+fi
+
 # Install user configured/requested packages
 if bashio::config.has_value 'packages'; then
-    apt update \
-        || bashio::exit.nok 'Failed updating Ubuntu packages repository indexes'
+    apt-get update \
+        || bashio::exit.nok 'Failed updating Debian package repository indexes'
 
     for package in $(bashio::config 'packages'); do
         apt-get install -y "$package" \
